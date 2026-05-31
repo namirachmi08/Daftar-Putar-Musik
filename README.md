@@ -24,10 +24,13 @@ Fitur:
 * Ganti Playlist
 
 Cara Menjalankan program:
-1. Download ZIP dari GitHub.
-2. Ekstrak file ZIP.
-3. Buka folder project menggunakan Visual Studio Code.
-4. Install library yang diperlukan: 
-```pip install pygame```
-5. Jalankan program
+1. Download source code dari repository GitHub.
+2. Download folder musik melalui link Google Drive yang terlampir. 
+3. Letakkan folder musik ke dalam folder project yang sama dengan source code dari GitHub.
+4. Buka folder project menggunakan Visual Studio Code.
+5. Install library yang diperlukan: ```pip install pygame```
+6. Jalankan program
+
+
+
 
