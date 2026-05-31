@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Moodify</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial;
+    background:#121212;
+    color:white;
+}
+
+.container{
+    display:flex;
+    height:calc(100vh - 120px);
+}
+
+.sidebar{
+    width:200px;
+    padding:10px;
+    background:#000;
+    overflow-y:auto;
+}
+
+input[type="file"]{
+    width:100%;
+    font-size:12px;
+    color:white;
+}
+
+.folder-item{
+    list-style:none;
+    padding:8px;
+    cursor:pointer;
+    border-radius:6px;
+}
+
+.folder-item:hover{ background:#222; }
+.folder-item.active{ background:#1db954; }
+
+.main,.shuffle{
+    flex:1;
+    padding:15px;
+    overflow-y:auto;
+}
+
+.shuffle{
+    display:none;
+    background:#181818;
+}
+
+li{
+    list-style:none;
+    padding:8px;
+    cursor:pointer;
+    border-radius:6px;
+}
+
+li:hover{ background:#222; }
+
+.now{
+    color:#1db954;
+    font-weight:bold;
+}
+
+.player{
+    position:fixed;
+    bottom:0;
+    width:100%;
+    background:#181818;
+    padding:12px 10px;
+    text-align:center;
+}
+
+#now{
+    margin-bottom:6px;
+    font-size:14px;
+}
+
+#time{
+    font-size:12px;
+    color:#b3b3b3;
+    text-align:center;
+    margin-top:4px;
+    margin-bottom:8px;
+}
+
+.progress{
+    width:70%;
+    height:5px;
+    background:#333;
+    margin:10px auto;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.progress-bar{
+    height:100%;
+    background:#1db954;
+    width:0%;
+    transition:width 0.2s linear;
+}
+
+.controls button{
+    background:none;
+    border:none;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+    margin:4px;
+    padding:4px;
+}
+
+.controls button:hover{ color:#1db954; }
+
+#shuffleBtn svg{
+    width:14px;
+    height:14px;
+    stroke:white;
+}
+
+#shuffleBtn.active svg{ stroke:#1db954; }
+
+/* credit pojok kiri bawah player */
+.credit{
+    position:absolute;
+    bottom:10px;
+    left:15px;
+    font-size:11px;
+    color:#535353;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="sidebar">
+        <h3>🎧 Music</h3>
+        <input type="file" id="fileInput" webkitdirectory multiple>
+        <ul id="playlistFolders"></ul>
+    </div>
+
+    <div class="main">
+        <h3>Playlist</h3>
+        <ul id="playlist"></ul>
+    </div>
+
+    <div class="shuffle">
+        <h3>Shuffle</h3>
+        <ul id="shufflePlaylist"></ul>
+    </div>
+
+</div>
+
+<div class="player">
+
+    <div id="now">Belum ada lagu</div>
+    <div id="time">00:00 / 00:00</div>
+
+    <div class="progress">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevSong()">⏮</button>
+        <button onclick="playSong()">▶</button>
+        <button onclick="pauseSong()">⏸</button>
+        <button onclick="nextSong()">⏭</button>
+
+        <button onclick="shuffle()" id="shuffleBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                <path d="M16 3h5v5"/>
+                <path d="M4 20L21 3"/>
+                <path d="M16 21h5v-5"/>
+                <path d="M4 4l7 7"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- nama pembuat -->
+    <div class="credit">Made by Nami &amp; Astia </div>
+
+</div>
+
+<script>
+
+let playlists    = {};
+let songs        = [];
+let shuffleList  = [];
+let activeFolder = null;
+let currentIndex = 0;
+let isShuffle    = false;
+let currentSong  = null;
+
+const audio      = new Audio();
+const fileInput  = document.getElementById("fileInput");
+const folderEl   = document.getElementById("playlistFolders");
+const playlistEl = document.getElementById("playlist");
+const shuffleEl  = document.getElementById("shufflePlaylist");
+const shuffleBtn = document.getElementById("shuffleBtn");
+const bar        = document.getElementById("progressBar");
+const time       = document.getElementById("time");
+
+fileInput.addEventListener("change", e => {
+    const files = [...e.target.files];
+    playlists = {};
+
+    files.forEach(f => {
+        const folder = f.webkitRelativePath.split("/").slice(-2)[0];
+        if (!playlists[folder]) playlists[folder] = [];
+        playlists[folder].push(f);
+    });
+
+    activeFolder = Object.keys(playlists)[0];
+    songs        = playlists[activeFolder];
+    shuffleList  = [...songs];
+
+    renderFolders();
+    renderPlaylist();
+});
+
+function renderFolders() {
+    folderEl.innerHTML = "";
+
+    Object.keys(playlists).forEach(folder => {
+        const li = document.createElement("li");
+        li.className  = "folder-item";
+        li.textContent = "📁 " + folder;
+
+        if (folder === activeFolder) li.classList.add("active");
+
+        li.onclick = () => {
+            activeFolder = folder;
+            songs        = playlists[folder];
+            shuffleList  = [...songs];
+            currentIndex = 0;
+            isShuffle    = false;
+
+            document.querySelector(".shuffle").style.display = "none";
+            shuffleBtn.classList.remove("active");
+
+            renderFolders();
+            renderPlaylist();
+        };
+
+        folderEl.appendChild(li);
+    });
+}
+
+function renderPlaylist() {
+    playlistEl.innerHTML = "";
+    shuffleEl.innerHTML  = "";
+
+    songs.forEach((s, i) => {
+        const li = document.createElement("li");
+        li.textContent = s.name.replace(".mp3", "");
+
+        if (currentSong && s.name === currentSong.name)
+            li.classList.add("now");
+
+        li.onclick = () => {
+            isShuffle    = false;
+            currentIndex = i;
+            document.querySelector(".shuffle").style.display = "none";
+            shuffleBtn.classList.remove("active");
+            playSong();
+        };
+
+        playlistEl.appendChild(li);
+    });
+
+    shuffleList.forEach((s, i) => {
+        const li = document.createElement("li");
+        li.textContent = s.name.replace(".mp3", "");
+
+        if (currentSong && s.name === currentSong.name)
+            li.classList.add("now");
+
+        li.onclick = () => {
+            isShuffle    = true;
+            currentIndex = i;
+            playSong();
+        };
+
+        shuffleEl.appendChild(li);
+    });
+}
+
+function playSong() {
+    const list = isShuffle ? shuffleList : songs;
+    if (!list.length) return;
+
+    const selected = list[currentIndex];
+
+    if (!currentSong || currentSong !== selected) {
+        currentSong = selected;
+        audio.src   = URL.createObjectURL(currentSong);
+        document.getElementById("now").textContent = currentSong.name;
+    }
+
+    audio.play();
+    renderPlaylist();
+}
+
+function nextSong() {
+    const list   = isShuffle ? shuffleList : songs;
+    currentIndex = (currentIndex + 1) % list.length;
+    playSong();
+}
+
+function prevSong() {
+    const list   = isShuffle ? shuffleList : songs;
+    currentIndex = (currentIndex - 1 + list.length) % list.length;
+    playSong();
+}
+
+function pauseSong() {
+    audio.pause();
+}
+
+function shuffle() {
+    shuffleList  = [...songs].sort(() => Math.random() - 0.5);
+    isShuffle    = true;
+    currentIndex = 0;
+
+    document.querySelector(".shuffle").style.display = "block";
+    shuffleBtn.classList.add("active");
+
+    renderPlaylist();
+    playSong();
+}
+
+function format(t) {
+    if (!t || isNaN(t)) return "00:00";
+    const m = Math.floor(t / 60);
+    const s = Math.floor(t % 60);
+    return `${m}:${s < 10 ? "0" : ""}${s}`;
+}
+
+audio.addEventListener("timeupdate", () => {
+    if (audio.duration)
+        bar.style.width = (audio.currentTime / audio.duration) * 100 + "%";
+    time.textContent = `${format(audio.currentTime)} / ${format(audio.duration)}`;
+});
+
+audio.addEventListener("ended", nextSong);
+
+</script>
+</body>
+</html>
