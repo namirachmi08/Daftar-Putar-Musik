@@ -2,6 +2,7 @@
 Daftar Putar Musik berbasis Python yang menerapkan struktur data Tree, Double Linked List Circular, dan Queue untuk mengelola playlist musik.
 
 Identitas Kelas 25B, Program Studi Sains Data, Universitas Negeri Surabaya
+
 Nama Anggota Kelompok 3:
 1. Namira Rachmi Andini (25031554153)
 2. Astia Kamila Dwi Septiani (25031554162)
