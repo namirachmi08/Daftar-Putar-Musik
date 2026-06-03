@@ -303,9 +303,14 @@ class TreePlaylist:
                     if lagu == playlist.head:   # berhenti saat kembali ke awal (circular)
                         break
 
+                # Jika ini playlist terakhir, gunakan spasi kosong agar garis tidak menggantung.
+                # Jika bukan playlist terakhir, tetap gunakan garis vertikal '│'.
+                garis_induk = "    " if urutan == total else "│   "
+
                 for i, judul in enumerate(semua):
                     simbol_lagu = "└──" if i == len(semua) - 1 else "├──"
-                    print(f"│   │   {simbol_lagu} 🎵 {judul}")
+                    # Menggunakan variabel garis_induk yang dinamis
+                    print(f"│   {garis_induk}{simbol_lagu} 🎵 {judul}")
 
     # Menampilkan semua playlist dan meminta user memilih salah satu
     # Mengembalikan objek Playlist yang dipilih
@@ -323,7 +328,7 @@ class TreePlaylist:
                 print("Masukkan angka ya!")
                 continue
 
-            index = int(pilihan) - 1             # ubah ke index, kurangi 1 karena list Python mulai dari 0
+            index = int(pilihan) - 1                # ubah ke index, kurangi 1 karena list Python mulai dari 0
             if 0 <= index < len(daftar):
                 return self.playlists[daftar[index]]    # kembalikan objek Playlist
             else:
