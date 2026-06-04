@@ -139,15 +139,17 @@ li:hover{ background:#222; }
 <div class="container">
 
     <div class="sidebar">
-        <h3>🎧 Music</h3>
+        <h3>Daftar Putar</h3>
         <input type="file" id="fileInput" webkitdirectory multiple>
         <ul id="playlistFolders"></ul>
     </div>
 
     <div class="main">
-        <h3>Playlist</h3>
+        <h3>🎧 Musik</h3>
         <ul id="playlist"></ul>
     </div>
+
+</div>
 
     <div class="shuffle">
         <h3>Shuffle</h3>
